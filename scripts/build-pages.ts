@@ -1,13 +1,16 @@
 import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { loadGroups } from "../src/config.ts";
 import { parseIcs } from "../src/ics.ts";
 
-const sourceUrl = process.env.ADE_ICS_URL;
-const groupId = process.env.ADE_GROUP_ID ?? "fi1g2";
-const groupLabel = process.env.ADE_GROUP_LABEL ?? "R&T — FI1G2";
+// En local, on réutilise le fichier privé ignoré par Git.
+const localGroup = process.env.ADE_ICS_URL ? undefined : loadGroups("config/groups.json")[0];
+const sourceUrl = process.env.ADE_ICS_URL ?? localGroup?.icsUrl;
+const groupId = process.env.ADE_GROUP_ID ?? localGroup?.id ?? "fi1g2";
+const groupLabel = process.env.ADE_GROUP_LABEL ?? localGroup?.label ?? "R&T — FI1G2";
 const destination = path.resolve("site");
 
-if (!sourceUrl) throw new Error("ADE_ICS_URL est requis. Ajoute-le comme secret GitHub Actions.");
+if (!sourceUrl) throw new Error("Ajoute ADE_ICS_URL dans GitHub Actions ou crée config/groups.json en local.");
 if (new URL(sourceUrl).protocol !== "https:") throw new Error("ADE_ICS_URL doit utiliser HTTPS.");
 
 const response = await fetch(sourceUrl, { headers: { accept: "text/calendar" } });
