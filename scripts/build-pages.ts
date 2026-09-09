@@ -14,6 +14,7 @@ const response = await fetch(sourceUrl, { headers: { accept: "text/calendar" } }
 if (!response.ok) throw new Error(`ADE a répondu ${response.status}.`);
 const content = await response.text();
 const events = parseIcs(content);
+if (!events.length) throw new Error("ADE a renvoyé un calendrier vide. Vérifie le secret ADE_ICS_URL.");
 const updatedAt = new Date().toISOString();
 
 await rm(destination, { recursive: true, force: true });
