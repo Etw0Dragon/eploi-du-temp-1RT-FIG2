@@ -64,7 +64,8 @@ async function staticSchedule(from, to) {
 }
 
 function colorFor(title) {
-  return [...title].reduce((total, letter) => total * 31 + letter.charCodeAt(0), 0) % 360;
+  const hue = Math.abs([...title].reduce((total, letter) => total * 31 + letter.charCodeAt(0), 0)) % 360;
+  return `${hue} 58% 38%`;
 }
 
 function minutesInParis(value) {
