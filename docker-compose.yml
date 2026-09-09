@@ -1,0 +1,11 @@
+services:
+  edt:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      PORT: "3000"
+      GROUPS_CONFIG: "/app/config/groups.json"
+    volumes:
+      - ./config/groups.json:/app/config/groups.json:ro

@@ -1,0 +1,4 @@
+node_modules
+dist
+config/groups.json
+.git

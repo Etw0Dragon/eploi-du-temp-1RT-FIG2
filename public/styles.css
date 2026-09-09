@@ -1,0 +1,31 @@
+body { background: linear-gradient(135deg, #f4f8ff, #fffaf4 58%, #f2fff8); }
+.navbar { box-shadow: 0 1px 12px rgb(17 66 138 / .25); }
+.navbar-brand { letter-spacing: -.04em; }
+#group-select { max-width: min(15rem, 38vw); }
+#current-week { min-width: 12rem; }
+.week-grid { display: flex; align-items: flex-start; gap: 1rem; overflow-x: auto; padding: .25rem .25rem 1rem; }
+.time-rail { position: sticky; left: 0; z-index: 1; flex: 0 0 2.4rem; background: #f7f9fc; color: #7b8794; font-size: .68rem; }
+.time-rail span { position: absolute; right: .45rem; transform: translateY(-.45rem); }
+.day { min-width: 11rem; flex: 1 0 11rem; }
+.day > header { height: 2rem; }
+.day-events { display: grid; grid-template-rows: repeat(48, var(--slot-height)); border-radius: .5rem; background: repeating-linear-gradient(to bottom, rgb(72 107 153 / .13) 0 1px, transparent 1px var(--hour-height)); }
+.event { position: relative; overflow: auto; border-left: .3rem solid hsl(var(--tone)) !important; background: hsl(var(--tone) / .12) !important; box-shadow: 0 2px 8px rgb(30 45 70 / .11) !important; }
+.event-time { color: hsl(var(--tone)) !important; }
+.event h3 { color: #26364a; }
+.next-card { min-height: 7.5rem; }
+.next-card .event { position: relative; display: inline-block; border-left-width: .25rem !important; background: hsl(var(--tone) / .1) !important; }
+.next-card .event .card-body { padding: .45rem .65rem !important; }
+.next-card .event h3, .next-card .event-time { display: inline; }
+.next-card .event-time { margin-right: .5rem; }
+.empty-day { grid-row: 1; margin: .5rem .6rem !important; }
+.day.is-today header { border-color: #198754 !important; }.day.is-today header strong { color: #198754 !important; }
+@media (max-width: 720px) {
+  .navbar { flex-wrap: wrap; row-gap: .5rem; }
+  #group-select { max-width: calc(100vw - 9rem); }
+  #refresh-button { order: 2; margin-left: auto !important; }
+  .navbar > .d-flex { order: 3; width: 100%; margin-left: 0 !important; }
+  #current-week { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .week-grid { gap: 0; padding-inline: 0; scroll-padding-inline: 0; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+  .time-rail { display: none; }
+  .day { min-width: 100%; flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+}

@@ -1,0 +1,36 @@
+import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { parseIcs, parisDate } from "../src/ics.ts";
+
+const sourceUrl = process.env.ADE_ICS_URL;
+const groupId = process.env.ADE_GROUP_ID ?? "fi1g2";
+const groupLabel = process.env.ADE_GROUP_LABEL ?? "R&T — FI1G2";
+const destination = path.resolve("site");
+
+if (!sourceUrl) throw new Error("ADE_ICS_URL est requis. Ajoute-le comme secret GitHub Actions.");
+if (new URL(sourceUrl).protocol !== "https:") throw new Error("ADE_ICS_URL doit utiliser HTTPS.");
+
+const response = await fetch(sourceUrl, { headers: { accept: "text/calendar" } });
+if (!response.ok) throw new Error(`ADE a répondu ${response.status}.`);
+const content = await response.text();
+const events = parseIcs(content);
+const updatedAt = new Date().toISOString();
+
+const eventsByMonth = new Map<string, typeof events>();
+for (const event of events) {
+  const month = parisDate(event.startsAt).slice(0, 7);
+  eventsByMonth.set(month, [...(eventsByMonth.get(month) ?? []), event]);
+}
+
+await rm(destination, { recursive: true, force: true });
+await cp(path.resolve("public"), destination, { recursive: true });
+await writeFile(path.join(destination, ".nojekyll"), "");
+await mkdir(path.join(destination, "data", "schedules", groupId), { recursive: true });
+await writeFile(path.join(destination, "data", "groups.json"), JSON.stringify([{ id: groupId, label: groupLabel }], null, 2));
+
+for (const [month, monthEvents] of eventsByMonth) {
+  const target = path.join(destination, "data", "schedules", groupId, `${month}.json`);
+  await writeFile(target, JSON.stringify({ updatedAt, events: monthEvents }));
+}
+
+console.log(`GitHub Pages généré : ${events.length} événements, ${eventsByMonth.size} fichiers mensuels.`);
