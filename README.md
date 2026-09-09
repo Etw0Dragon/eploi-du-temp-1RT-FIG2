@@ -18,6 +18,15 @@ Ouvre ensuite [http://localhost:3000](http://localhost:3000).
 
 La commande démarre le front **et** le back en même temps. Arrête-la avec Ctrl+C.
 
+Pour tester les devoirs en local, ajoute aussi ces deux lignes dans .env :
+
+~~~text
+SUPABASE_URL=https://ton-projet.supabase.co
+SUPABASE_ANON_KEY=ta-cle-publique
+~~~
+
+La commande npm run dev charge automatiquement ce fichier et fournit ces valeurs au navigateur. Ne mets jamais la clé service_role dans .env.
+
 ## Ajouter son lien ADE
 
 Ouvre config/groups.json et remplace le lien d’exemple par ton lien ICS ADE :
@@ -43,9 +52,11 @@ Pour ajouter un groupe au menu, copie un objet et donne-lui un id différent. Re
 | public/index.html | La page et la barre bleue. |
 | public/styles.css | Les couleurs, l’affichage desktop et mobile. |
 | public/app.js | Tout le comportement du calendrier. Commence par start(), puis lis loadSchedule() et renderWeek(). |
+| public/todo.js | L’onglet Devoirs : Supabase, brouillon local, formulaires et affichage. |
 | src/server.ts | Les trois routes du serveur : groupes, emploi du temps et santé. |
 | src/ics.ts | Transforme le format ICS d’ADE en cours utilisables par le site. |
 | scripts/build-pages.ts | Prépare les fichiers statiques pour GitHub Pages. |
+| supabase/migrations/ | Le schéma sécurisé de la base de devoirs. |
 
 ## Les commandes utiles
 
@@ -61,7 +72,7 @@ npm run build:pages  # créer la version GitHub Pages dans site/
 
 GitHub Pages ne peut pas lancer un serveur Node.js. Le workflow prépare donc le calendrier avant la publication, avec un secret GitHub. Le lien ADE reste privé.
 
-1. Crée un dépôt GitHub et pousse ce dossier sur la branche main.
+1. Crée un dépôt GitHub et pousse ce dossier sur la branche master.
 2. Dans GitHub, ouvre **Settings → Secrets and variables → Actions**.
 3. Ajoute le secret ADE_ICS_URL avec ton lien ICS ADE.
 4. Dans **Settings → Pages**, choisis **Source : GitHub Actions**.
@@ -73,6 +84,36 @@ https://TON-UTILISATEUR.github.io/NOM-DU-DEPOT/
 ~~~
 
 La version publiée est statique : ses données sont actualisées au maximum une fois par heure. En local ou avec Docker, le serveur récupère ADE toutes les 15 minutes.
+
+## Activer les devoirs avec Supabase
+
+Les devoirs sont partagés avec Supabase, sans demander d’adresse e-mail ou de mot de passe aux étudiants. Chaque navigateur reçoit une identité anonyme ; supprimer les données du navigateur fait perdre les droits de modification de ses anciens devoirs.
+
+1. Crée un projet sur [Supabase](https://supabase.com/).
+2. Dans **Authentication → Providers**, active **Anonymous sign-ins**.
+3. Dans **SQL Editor**, colle et exécute le contenu de supabase/migrations/20260909_homeworks.sql.
+   - Si tu avais déjà exécuté cette migration avant le correctif des coches, exécute aussi supabase/migrations/20260909_fix_homework_progress_upsert.sql.
+4. Dans **Project Settings → API**, récupère l’URL du projet et la clé publique anon ou publishable.
+5. Ajoute deux secrets GitHub dans **Settings → Secrets and variables → Actions** :
+
+| Secret | Valeur |
+| --- | --- |
+| SUPABASE_URL | L’URL HTTPS du projet Supabase |
+| SUPABASE_ANON_KEY | La clé publique anon/publishable |
+
+6. Push sur master ou relance le workflow Pages.
+
+La clé publique est visible dans le navigateur : c’est normal. La sécurité repose sur les règles RLS installées par la migration. Ne mets jamais la clé service_role dans GitHub Pages ou dans le code.
+
+Pour tester la configuration localement, exporte les deux variables avant de lancer le build Pages :
+
+~~~sh
+export SUPABASE_URL="https://ton-projet.supabase.co"
+export SUPABASE_ANON_KEY="ta-cle-publique"
+npm run build:pages
+~~~
+
+Le formulaire garde automatiquement un brouillon dans le navigateur. La publication est limitée à un devoir toutes les 10 secondes par navigateur ; les coches « fait » restent instantanées et personnelles.
 
 ## Docker (facultatif)
 

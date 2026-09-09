@@ -1,5 +1,5 @@
-// Tout le front est ici. Il n'y a ni framework ni étape de compilation pour plus de legerte :
-// le navigateur interprete directement app.js (ce fichier).
+// Tout le front est ici. Il n'y a ni framework ni étape de compilation pour plus de légèreté :
+// le navigateur interprète directement app.js (ce fichier).
 const $ = (selector) => document.querySelector(selector);
 const groupSelect = $("#group-select");
 const nextCard = $("#next-card");
@@ -140,10 +140,10 @@ async function loadSchedule() {
 async function start() {
   try {
     let groups;
-    try {
+    if (location.hostname.endsWith(".github.io")) {
       groups = await getJson("data/groups.json");
       staticSite = true;
-    } catch {
+    } else {
       groups = await getJson("./api/groups");
     }
     groupSelect.innerHTML = groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.label)}</option>`).join("");

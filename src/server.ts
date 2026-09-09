@@ -35,7 +35,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     reply.header("X-Content-Type-Options", "nosniff");
     reply.header("Referrer-Policy", "same-origin");
     reply.header("X-Robots-Tag", "noindex, nofollow, noarchive");
-    reply.header("Content-Security-Policy", "default-src 'self'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+    reply.header("Content-Security-Policy", "default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
     return payload;
   });
 
@@ -47,6 +47,14 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   app.get("/api/groups", async (_request, reply) => {
     if (configError) return reply.code(503).send({ error: "Configuration des groupes indisponible." });
     return groups.map(({ id, label }) => ({ id, label }));
+  });
+
+  // En développement, le navigateur reçoit seulement les deux valeurs publiques Supabase.
+  app.get("/supabase-config.js", async (_request, reply) => {
+    const url = process.env.SUPABASE_URL ?? "";
+    const anonKey = process.env.SUPABASE_ANON_KEY ?? "";
+    const config = url && anonKey ? { url, anonKey } : { url: "", anonKey: "" };
+    return reply.type("application/javascript; charset=utf-8").send(`window.EDT_SUPABASE = ${JSON.stringify(config)};`);
   });
 
   app.get("/api/schedule", async (request, reply) => {

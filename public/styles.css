@@ -1,6 +1,8 @@
 body { background: linear-gradient(135deg, #f4f8ff, #fffaf4 58%, #f2fff8); }
 .navbar { box-shadow: 0 1px 12px rgb(17 66 138 / .25); }
 .navbar-brand { letter-spacing: -.04em; }
+.nav-tabs-edt .nav-link { color: rgb(255 255 255 / .78); font-size: .85rem; padding: .28rem .6rem; }
+.nav-tabs-edt .nav-link.active { background: rgb(255 255 255 / .2); color: #fff; }
 #group-select { max-width: min(15rem, 38vw); }
 #current-week { min-width: 12rem; }
 .week-grid { display: flex; align-items: flex-start; gap: 1rem; overflow-x: auto; padding: .25rem .25rem 1rem; }
@@ -19,13 +21,49 @@ body { background: linear-gradient(135deg, #f4f8ff, #fffaf4 58%, #f2fff8); }
 .next-card .event-time { margin-right: .5rem; }
 .empty-day { grid-row: 1; margin: .5rem .6rem !important; }
 .day.is-today header { border-color: #198754 !important; }.day.is-today header strong { color: #198754 !important; }
+.todo-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: .25rem auto 1.25rem; max-width: 52rem; }
+.todo-eyebrow { color: #0d6efd; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.todo-title { color: #1f3550; font-size: clamp(2rem, 5vw, 2.7rem); font-weight: 750; letter-spacing: -.06em; }
+.todo-add { border-radius: 999px; box-shadow: 0 .45rem 1rem rgb(13 110 253 / .25); font-weight: 600; padding-inline: 1rem; white-space: nowrap; }
+.todo-filters { display: flex; gap: .45rem; align-items: center; max-width: 52rem; margin: auto; }
+#todo-status, #todo-list { max-width: 52rem; margin-inline: auto; }
+.todo-section { margin: 1.5rem 0 2rem; }
+.todo-section-title { color: #6d7b8e; font-size: .8rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.homework-card { background: rgb(255 255 255 / .82); border: 1px solid rgb(31 79 135 / .09); border-radius: 1rem; box-shadow: 0 .35rem 1rem rgb(30 45 70 / .06); display: flex; gap: .8rem; margin-top: .7rem; padding: .85rem .9rem; transition: transform .15s ease, box-shadow .15s ease; }
+.homework-card:hover { box-shadow: 0 .55rem 1.3rem rgb(30 45 70 / .1); transform: translateY(-1px); }
+.homework-card.is-done { opacity: .58; }
+.homework-card.is-late { border-left: .3rem solid #dc3545; }
+.homework-check { accent-color: #198754; flex: 0 0 auto; height: 1.25rem; margin-top: .2rem; width: 1.25rem; }
+.homework-main { min-width: 0; flex: 1; }
+.homework-subject { color: #0d6efd; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.homework-title { color: #26364a; font-size: 1.04rem; font-weight: 700; line-height: 1.2; margin: .15rem 0 .35rem; }
+.is-done .homework-title { text-decoration: line-through; }
+.homework-meta { color: #6d7b8e; font-size: .84rem; }
+.homework-description { color: #526173; font-size: .9rem; margin: .6rem 0 0; white-space: pre-line; }
+.homework-actions { display: flex; flex: 0 0 auto; gap: .3rem; }
+.homework-link { font-size: .88rem; }
+.empty-todos { border: 1px dashed #b9c5d3; border-radius: 1rem; color: #6d7b8e; padding: 2rem 1rem; text-align: center; }
+.homework-dialog { border: 0; border-radius: 1.15rem; box-shadow: 0 1rem 3rem rgb(20 36 57 / .28); max-width: 33rem; padding: 0; width: calc(100% - 2rem); }
+.homework-dialog::backdrop { background: rgb(20 36 57 / .48); backdrop-filter: blur(2px); }
+.homework-dialog form { padding: 1.35rem; }
+.dialog-heading { align-items: start; display: flex; justify-content: space-between; margin-bottom: 1.2rem; }
+.form-label { font-size: .88rem; font-weight: 650; }
+.homework-dialog .form-control:focus { border-color: #71a7ff; box-shadow: 0 0 0 .2rem rgb(13 110 253 / .14); }
 @media (max-width: 720px) {
   .navbar { flex-wrap: wrap; row-gap: .5rem; }
+  .nav-tabs-edt { order: 2; }
   #group-select { max-width: calc(100vw - 9rem); }
   #refresh-button { order: 2; margin-left: auto !important; }
-  .navbar > .d-flex { order: 3; width: 100%; margin-left: 0 !important; }
+  .navbar > .agenda-actions { order: 3; width: 100%; margin-left: 0 !important; }
   #current-week { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .week-grid { gap: 0; padding-inline: 0; scroll-padding-inline: 0; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
   .time-rail { display: none; }
   .day { min-width: 100%; flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+  .todo-toolbar { align-items: center; margin-top: .1rem; }
+  .todo-title { font-size: 2rem; }
+  .todo-add { bottom: 1rem; position: fixed; right: 1rem; z-index: 5; }
+  .todo-filters { overflow-x: auto; padding-bottom: .2rem; }
+  .todo-filters .btn { white-space: nowrap; }
+  .homework-card { padding: .8rem; }
+  .homework-actions .btn { padding-inline: .45rem; }
 }
