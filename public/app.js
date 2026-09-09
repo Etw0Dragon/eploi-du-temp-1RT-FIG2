@@ -140,7 +140,7 @@ async function loadSchedule() {
 async function start() {
   try {
     let groups;
-    if (location.hostname.endsWith(".github.io")) {
+    if (window.EDT_STATIC_SITE) {
       groups = await getJson("data/groups.json");
       staticSite = true;
     } else {

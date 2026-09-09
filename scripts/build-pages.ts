@@ -27,6 +27,7 @@ const updatedAt = new Date().toISOString();
 await rm(destination, { recursive: true, force: true });
 await cp(path.resolve("public"), destination, { recursive: true });
 await writeFile(path.join(destination, ".nojekyll"), "");
+await writeFile(path.join(destination, "site-mode.js"), "window.EDT_STATIC_SITE = true;\n");
 await mkdir(path.join(destination, "data"), { recursive: true });
 await writeFile(path.join(destination, "data", "groups.json"), JSON.stringify([{ id: groupId, label: groupLabel }], null, 2));
 await writeFile(path.join(destination, "data", "schedule.json"), JSON.stringify({ updatedAt, events }));
