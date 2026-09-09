@@ -53,27 +53,12 @@ async function getJson(url) {
   return data;
 }
 
-// GitHub Pages ne possède pas dapi. Le workflow y dépose un fichier JSON par mois.
-function monthsBetween(from, to) {
-  const months = [];
-  const cursor = new Date(`${from}T12:00:00`);
-  const last = new Date(`${to}T12:00:00`);
-  cursor.setDate(1);
-  last.setDate(1);
-  while (cursor <= last) {
-    months.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
-    cursor.setMonth(cursor.getMonth() + 1);
-  }
-  return months;
-}
-
+// GitHub Pages ne possède pas d’API. Le workflow y dépose ce calendrier en JSON.
 async function staticSchedule(from, to) {
-  const files = monthsBetween(from, to).map((month) => getJson(`data/schedules/${encodeURIComponent(groupId)}/${month}.json`));
-  const calendars = await Promise.all(files);
-  const allEvents = calendars.flatMap((calendar) => calendar.events || []);
+  const calendar = await getJson("data/schedule.json");
   return {
-    events: allEvents.filter((event) => parisDate(event.startsAt) >= from && parisDate(event.startsAt) <= to),
-    fetchedAt: calendars.at(-1)?.updatedAt || new Date().toISOString(),
+    events: calendar.events.filter((event) => parisDate(event.startsAt) >= from && parisDate(event.startsAt) <= to),
+    fetchedAt: calendar.updatedAt,
     stale: false
   };
 }

@@ -66,7 +66,7 @@ GitHub Pages ne peut pas lancer un serveur Node.js. Le workflow prépare donc le
 3. Ajoute le secret ADE_ICS_URL avec ton lien ICS ADE.
 4. Dans **Settings → Pages**, choisis **Source : GitHub Actions**.
 
-Le fichier [deploy-pages.yml](.github/workflows/deploy-pages.yml) publie le site à chaque push, à la demande, et toutes les heures. L’adresse du site sera :
+Le fichier [deploy-pages.yml](.github/workflows/deploy-pages.yml) publie le site à chaque push sur master, à la demande, et toutes les heures. L’adresse du site sera :
 
 ~~~text
 https://TON-UTILISATEUR.github.io/NOM-DU-DEPOT/

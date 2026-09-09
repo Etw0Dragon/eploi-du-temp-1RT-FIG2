@@ -1,6 +1,6 @@
 import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { parseIcs, parisDate } from "../src/ics.ts";
+import { parseIcs } from "../src/ics.ts";
 
 const sourceUrl = process.env.ADE_ICS_URL;
 const groupId = process.env.ADE_GROUP_ID ?? "fi1g2";
@@ -16,21 +16,10 @@ const content = await response.text();
 const events = parseIcs(content);
 const updatedAt = new Date().toISOString();
 
-const eventsByMonth = new Map<string, typeof events>();
-for (const event of events) {
-  const month = parisDate(event.startsAt).slice(0, 7);
-  eventsByMonth.set(month, [...(eventsByMonth.get(month) ?? []), event]);
-}
-
 await rm(destination, { recursive: true, force: true });
 await cp(path.resolve("public"), destination, { recursive: true });
 await writeFile(path.join(destination, ".nojekyll"), "");
-await mkdir(path.join(destination, "data", "schedules", groupId), { recursive: true });
+await mkdir(path.join(destination, "data"), { recursive: true });
 await writeFile(path.join(destination, "data", "groups.json"), JSON.stringify([{ id: groupId, label: groupLabel }], null, 2));
-
-for (const [month, monthEvents] of eventsByMonth) {
-  const target = path.join(destination, "data", "schedules", groupId, `${month}.json`);
-  await writeFile(target, JSON.stringify({ updatedAt, events: monthEvents }));
-}
-
-console.log(`GitHub Pages généré : ${events.length} événements, ${eventsByMonth.size} fichiers mensuels.`);
+await writeFile(path.join(destination, "data", "schedule.json"), JSON.stringify({ updatedAt, events }));
+console.log(`GitHub Pages généré : ${events.length} événements.`);
