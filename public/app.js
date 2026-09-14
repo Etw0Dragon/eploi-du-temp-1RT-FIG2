@@ -8,6 +8,9 @@ const weekLabel = $("#week-label");
 const syncStatus = $("#sync-status");
 
 const PARIS = "Europe/Paris";
+const MOBILE_QUERY = "(max-width: 720px)";
+const MOBILE_DAYS_BEFORE = 7;
+const MOBILE_DAYS_AFTER = 13;
 const DAY_START = 7 * 60;
 const DAY_END = 19 * 60;
 const SLOT = 15;
@@ -18,11 +21,16 @@ const dayName = new Intl.DateTimeFormat("fr-FR", { timeZone: PARIS, weekday: "sh
 const shortDate = new Intl.DateTimeFormat("fr-FR", { timeZone: PARIS, day: "numeric", month: "short" });
 const time = new Intl.DateTimeFormat("fr-FR", { timeZone: PARIS, hour: "2-digit", minute: "2-digit" });
 const clock = new Intl.DateTimeFormat("en-GB", { timeZone: PARIS, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const mobileMedia = matchMedia(MOBILE_QUERY);
 
 let groupId = localStorage.getItem("edt-group") || "";
 let weekStart = monday(new Date());
 let events = [];
 let staticSite = false;
+let focusedDate = parisDate(new Date());
+let overviewVisible = false;
+let scrollStopTimer;
+let scheduleRequest = 0;
 
 function parisDate(value) {
   const parts = Object.fromEntries(parisParts.formatToParts(new Date(value)).filter(({ type }) => type !== "literal").map(({ type, value }) => [type, value]));
@@ -40,6 +48,23 @@ function addDays(date, number) {
   const result = new Date(date);
   result.setDate(result.getDate() + number);
   return result;
+}
+
+function dateFromParisDate(value) {
+  return new Date(`${value}T12:00:00`);
+}
+
+function isMobile() {
+  return mobileMedia.matches;
+}
+
+function activeWeekDates() {
+  return { start: parisDate(weekStart), end: parisDate(addDays(weekStart, 6)) };
+}
+
+function isActiveWeekDate(value) {
+  const { start, end } = activeWeekDates();
+  return value >= start && value <= end;
 }
 
 function escapeHtml(text) {
@@ -101,35 +126,87 @@ function renderNextCourse() {
   nextCard.innerHTML = course ? eventCard(course, true) : '<p class="empty-next">Rien de prévu dans les deux prochaines semaines.</p>';
 }
 
+function scrollToDate(value) {
+  if (!isMobile() || overviewVisible) return;
+  const target = weekGrid.querySelector(`[data-date="${value}"]`);
+  if (target) weekGrid.scrollLeft = target.offsetLeft;
+}
+
 function renderWeek() {
-  const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
-  weekLabel.textContent = `${shortDate.format(days[0])} — ${shortDate.format(days[6])}`;
+  const days = Array.from({ length: MOBILE_DAYS_BEFORE + MOBILE_DAYS_AFTER + 1 }, (_, index) => addDays(weekStart, index - MOBILE_DAYS_BEFORE));
+  weekLabel.textContent = `${shortDate.format(weekStart)} — ${shortDate.format(addDays(weekStart, 6))}`;
   const today = parisDate(new Date());
   weekGrid.innerHTML = timeRail() + days.map((day) => {
     const date = parisDate(day);
     const courses = events.filter((event) => parisDate(event.startsAt) === date);
     const content = courses.length ? courses.map((event) => eventCard(event)).join("") : '<p class="empty-day small text-body-secondary mb-0">Libre</p>';
-    return `<section class="day${date === today ? " is-today" : ""}" data-date="${date}"><header class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-2 small text-body-secondary"><span class="text-capitalize">${dayName.format(day)}</span><strong class="text-body fw-semibold">${day.getDate()}</strong></header><div class="day-events" style="--hour-height: ${HOUR_HEIGHT}px; --slot-height: ${HOUR_HEIGHT / 4}px">${content}</div></section>`;
+    const state = `${date === today ? " is-today" : ""}${isActiveWeekDate(date) ? "" : " is-buffer"}${date === focusedDate ? " is-focused" : ""}`;
+    return `<section class="day${state}" data-date="${date}"><header class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-2 small text-body-secondary"><span class="text-capitalize">${dayName.format(day)}</span><strong class="text-body fw-semibold">${day.getDate()}</strong></header><div class="day-events" style="--hour-height: ${HOUR_HEIGHT}px; --slot-height: ${HOUR_HEIGHT / 4}px">${content}</div></section>`;
   }).join("");
 
-  if (matchMedia("(max-width: 720px)").matches) {
-    weekGrid.querySelector(`[data-date="${today}"]`)?.scrollIntoView({ block: "nearest", inline: "start" });
-  }
+  requestAnimationFrame(() => scrollToDate(focusedDate));
+}
+
+function closestMobileDay() {
+  const days = [...weekGrid.querySelectorAll(".day")];
+  return days.reduce((closest, day) => {
+    if (!closest) return day;
+    return Math.abs(day.offsetLeft - weekGrid.scrollLeft) < Math.abs(closest.offsetLeft - weekGrid.scrollLeft) ? day : closest;
+  }, null);
+}
+
+function recenterMobileWeek() {
+  if (!isMobile() || overviewVisible) return;
+  const day = closestMobileDay();
+  const date = day?.dataset.date;
+  if (!date) return;
+  focusedDate = date;
+  const visibleWeek = monday(dateFromParisDate(date));
+  if (parisDate(visibleWeek) === parisDate(weekStart)) return;
+  weekStart = visibleWeek;
+  loadSchedule();
+}
+
+function updateOverviewToggle() {
+  const toggle = $("#week-overview-toggle");
+  const active = overviewVisible && isMobile();
+  weekGrid.classList.toggle("is-overview", active);
+  toggle.textContent = active ? "Vue jour" : "Vue semaine";
+  toggle.setAttribute("aria-pressed", String(active));
+  toggle.setAttribute("aria-label", active ? "Afficher un jour à la fois" : "Afficher toute la semaine");
+}
+
+function setOverviewVisible(value) {
+  if (!isMobile()) return;
+  if (value) recenterMobileWeek();
+  overviewVisible = value;
+  updateOverviewToggle();
+  if (!value) requestAnimationFrame(() => scrollToDate(focusedDate));
+}
+
+function resetToToday() {
+  const now = new Date();
+  weekStart = monday(now);
+  focusedDate = parisDate(now);
+  loadSchedule();
 }
 
 async function loadSchedule() {
   if (!groupId) return;
-  const from = parisDate(weekStart);
-  const to = parisDate(addDays(weekStart, 13));
+  const requestId = ++scheduleRequest;
+  const from = parisDate(addDays(weekStart, -MOBILE_DAYS_BEFORE));
+  const to = parisDate(addDays(weekStart, MOBILE_DAYS_AFTER));
   syncStatus.textContent = "Mise à jour…";
   try {
     const schedule = staticSite ? await staticSchedule(from, to) : await getJson(`./api/schedule?group=${encodeURIComponent(groupId)}&from=${from}&to=${to}`);
+    if (requestId !== scheduleRequest) return;
     events = schedule.events;
     renderNextCourse();
     renderWeek();
     const updated = time.format(new Date(schedule.fetchedAt));
     syncStatus.textContent = schedule.stale ? `Dernière version disponible — synchronisée à ${updated}` : `Synchronisé à ${updated}`;
   } catch (error) {
+    if (requestId !== scheduleRequest) return;
     const message = escapeHtml(error.message);
     nextCard.innerHTML = `<p class="error-message">${message}</p>`;
     weekGrid.innerHTML = '<p class="error-message">Réessaie dans quelques instants.</p>';
@@ -156,9 +233,19 @@ async function start() {
 }
 
 groupSelect.addEventListener("change", () => { groupId = groupSelect.value; localStorage.setItem("edt-group", groupId); loadSchedule(); });
-$("#refresh-button").addEventListener("click", loadSchedule);
-$("#previous-week").addEventListener("click", () => { weekStart = addDays(weekStart, -7); loadSchedule(); });
-$("#next-week").addEventListener("click", () => { weekStart = addDays(weekStart, 7); loadSchedule(); });
-$("#current-week").addEventListener("click", () => { weekStart = monday(new Date()); loadSchedule(); });
+$("#refresh-button").addEventListener("click", resetToToday);
+$("#previous-week").addEventListener("click", () => { weekStart = addDays(weekStart, -7); focusedDate = parisDate(weekStart); loadSchedule(); });
+$("#next-week").addEventListener("click", () => { weekStart = addDays(weekStart, 7); focusedDate = parisDate(weekStart); loadSchedule(); });
+$("#current-week").addEventListener("click", resetToToday);
+$("#week-overview-toggle").addEventListener("click", () => setOverviewVisible(!overviewVisible));
+weekGrid.addEventListener("scroll", () => {
+  clearTimeout(scrollStopTimer);
+  scrollStopTimer = setTimeout(recenterMobileWeek, 120);
+}, { passive: true });
+mobileMedia.addEventListener("change", () => {
+  if (!isMobile()) overviewVisible = false;
+  updateOverviewToggle();
+  renderWeek();
+});
 
 start();
