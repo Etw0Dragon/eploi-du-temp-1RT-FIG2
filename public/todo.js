@@ -79,11 +79,14 @@ function configured() {
 }
 
 async function ensureAnonymousUser() {
-  const { data: current } = await todo.client.auth.getUser();
+  const { data: current, error: currentError } = await todo.client.auth.getUser();
   if (current.user) {
     todo.user = current.user;
     return;
   }
+  // Un jeton conservé mais devenu invalide ne doit pas empêcher la création
+  // d'une nouvelle session anonyme après le rechargement de l'application.
+  if (currentError) await todo.client.auth.signOut({ scope: "local" });
   const { data, error } = await todo.client.auth.signInAnonymously();
   if (error) throw error;
   todo.user = data.user;
